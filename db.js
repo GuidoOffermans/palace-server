@@ -1,9 +1,6 @@
 const Sequelize = require('sequelize')
 
-const databaseUrl = process
-  .env
-  .DATABASE_URL ||
-  'postgres://postgres:palace@localhost:5432/postgres'
+const databaseUrl = 'postgres://postgres:palace@localhost:5432/postgres' || process.env.DATABASE_URL
 
 const db = new Sequelize(databaseUrl)
 
