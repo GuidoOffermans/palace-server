@@ -6,16 +6,17 @@ const bcrypt = require('bcrypt')
 
 const router = new Router()
 
-router.post('/login', (req, res, next) => {
+const login = (req, res, next) => {
   console.log('I am inside login function handler')
+  console.log('login body:', req.body)
   if (!req.body.name || !req.body.password) {
     res.status(400).send({ message: 'Please, supply a valid name and password' })
   } else {
     User.findOne({
-        where: {
-          name: req.body.name
-        }
-      })
+      where: {
+        name: req.body.name
+      }
+    })
       .then(user => {
         if (!user) {
           res.status(400).send({
@@ -39,7 +40,9 @@ router.post('/login', (req, res, next) => {
         })
       })
   }
-})
+}
+
+router.post('/login', login)
 
 // router.get('/secret-endpoint', auth, (req, res) => {
 //   const auth = req.headers.authorization && req.headers.authorization.split(' ')

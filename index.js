@@ -28,7 +28,7 @@ app.use(jsonParser)
 const loginRouter = require('./auth/router')
 app.use(loginRouter)
 
-async function update () {
+async function update() {
 
 }
 
