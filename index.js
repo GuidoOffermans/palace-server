@@ -10,7 +10,7 @@ const gameFactory = require(
 const Game = require('./game/model')
 
 const userFactory = require(
-  './game/router'
+  './user/router'
 )
 
 const User = require('./user/model')
@@ -28,6 +28,26 @@ app.use(jsonParser)
 async function update () {
 
 }
+
+// async function onStream (
+//   request, response
+// ) {
+//   const messages = await Message
+//     .findAll()
+//   const data = JSON.stringify(messages)
+
+//   stream.updateInit(data)
+
+//   return stream.init(request, response)
+// }
+
+// app.get('/stream', onStream)
+
+const gameRouter = gameFactory()
+app.use(gameRouter)
+
+const userRouter = userFactory()
+app.use(userRouter)
 
 
 
