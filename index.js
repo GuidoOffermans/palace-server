@@ -21,6 +21,10 @@ app.use(middleware);
 const jsonParser = bodyParser.json();
 app.use(jsonParser);
 
+
+const loginRouter = require('./auth/router')
+app.use(loginRouter)
+
 async function update () {
   const games = await Game
     .findAll({ include: [User] })
