@@ -1,60 +1,69 @@
-const bodyParser = require('body-parser')
-const cors = require('cors')
-const express = require('express')
-const Sse = require('json-sse')
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const express = require('express');
+const Sse = require('json-sse');
 
-const gameFactory = require(
-  './game/router'
-)
+const gameFactory = require('./game/router');
 
-const Game = require('./game/model')
+const Game = require('./game/model');
 
-const userFactory = require(
-  './user/router'
-)
+const userFactory = require('./user/router');
 
-const User = require('./user/model')
+const User = require('./user/model');
 
-const stream = new Sse()
+const stream = new Sse();
 
-const app = express()
+const app = express();
 
-const middleware = cors()
-app.use(middleware)
+const middleware = cors();
+app.use(middleware);
 
-const jsonParser = bodyParser.json()
-app.use(jsonParser)
+const jsonParser = bodyParser.json();
+app.use(jsonParser);
+
 
 const loginRouter = require('./auth/router')
 app.use(loginRouter)
 
-async function update() {
+async function update () {
+  const games = await Game
+    .findAll({ include: [User] })
 
+  games.map(game => {
+    const string = JSON.stringify(
+      game.dataValues,
+      null,
+      2
+    )
+
+    console.log('string test:', string)
+  })
+
+  const data = JSON.stringify(games)
+
+  stream.send(data)
 }
 
-// async function onStream (
-//   request, response
-// ) {
-//   const messages = await Message
-//     .findAll()
-//   const data = JSON.stringify(messages)
 
-//   stream.updateInit(data)
+async function onStream (
+  request, response
+) {
+  const games = await Game
+    .findAll()
+  const data = JSON.stringify(games)
 
-//   return stream.init(request, response)
-// }
+  stream.updateInit(data)
 
-// app.get('/stream', onStream)
+  return stream.init(request, response)
+}
 
-const gameRouter = gameFactory()
-app.use(gameRouter)
+app.get('/stream', onStream)
 
-const userRouter = userFactory()
-app.use(userRouter)
+const gameRouter = gameFactory(update);
+app.use(gameRouter);
 
+const userRouter = userFactory(update);
+app.use(userRouter);
 
-
-
-
-const port = process.env.PORT || 4000
-app.listen(port, () => console.log(`server running on port: ${port}`))
+const port = process.env.PORT || 4000;
+app.listen(port, () => console.log(`server running on port: ${port}`));

@@ -6,8 +6,9 @@ const { Router } = express
 
 const User = require('./model')
 
-function factory () {
+function factory (update) {
   const router = new Router()
+
 
   router.post('/sign-up', (req, res, next) => {
     console.log(req.body)
@@ -20,6 +21,7 @@ function factory () {
     .then(user => res.status(201).send(user))
     .catch(err => next(err))
   })
+
 
   return router
 }
