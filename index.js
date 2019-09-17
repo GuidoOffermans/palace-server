@@ -36,7 +36,7 @@ async function update () {
       2
     )
 
-    console.log('string test:', string)
+    // console.log('string test:', string)
   })
 
   const data = JSON.stringify(games)
@@ -49,7 +49,7 @@ async function onStream (
   request, response
 ) {
   const games = await Game
-    .findAll()
+    .findAll({include: [User]})
   const data = JSON.stringify(games)
 
   stream.updateInit(data)

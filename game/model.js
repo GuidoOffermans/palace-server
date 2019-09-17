@@ -9,7 +9,12 @@ const Game = db.define(
   'game',
   {
     name:Sequelize.STRING,
-    deck_id: Sequelize.STRING
+    deck_id: Sequelize.STRING,
+    game_status:{
+      type: Sequelize.ENUM,
+      values: ['waiting', 'playing', 'done'],
+      defaultValue: 'waiting'
+    }
   }
 )
 
