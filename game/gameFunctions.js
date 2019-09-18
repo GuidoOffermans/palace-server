@@ -1,35 +1,56 @@
-const fetch = require('superagent')
+const fetch = require('superagent');
 
+async function setup(deck_id, players) {
+	const promises = players.map(async (player) => {
+		console.log('player');
+		const card = await drawACard(deck_id, 1);
+		console.log('drawing');
+		const pile = await addCardToPile(deck_id, player.id, card);
+		return pile;
+	});
 
- async function drawACard (deck_id, players)  {
-  const promises = players.map(async (player) => {
-    console.log("playerrrrr", player)
-    const fetchedCard = await fetch(`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=1`)
-    const card = await fetchedCard.body.cards[0].code
-    const playerPile = await fetch(`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${player.id}/add/?cards=${card}`)
-    console.log('playerPile',playerPile.body)
-    return playerPile.body
-  })
+	const bodies = await Promise.all(promises).then().catch(console.error);
+	console.log('bodies-------', bodies[0]);
 
-  const bodies = Promise.all(promises)
-  return bodies 
+	const pileArray = Object.keys(bodies[0].piles);
+	console.log('pileArray', pileArray);
 
-  
+	const pilesList = await pileArray.map((pileId) =>
+		listPiles(deck_id, pileId)
+	);
 
+	const piles = await Promise.all(pilesList);
 
-  // for (player in players){
-  //   console.log("playerrrrr", player)
-  //   const fetchedCard = await fetch(`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=1`)
-  //   const card = await fetchedCard.body.cards[0].code
-  //   const playerPile = await fetch(`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${player.id}/add/?cards=${card}`)
-  //   console.log('playerPile',playerPile.body)
-  //   array.push(playerPile.body)
-  // }
-    return console.log(array)
-  
-  // return console.log("array------------------------",array)
+	console.log('pilesList', piles);
+
+	return piles
 }
 
+async function drawACard(deck_id, numberOfCards) {
+	const fetchedCard = await fetch(
+		`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=${numberOfCards}`
+	);
+	const card = await fetchedCard.body.cards[0].code;
+	return card;
+}
 
+async function addCardToPile(deck_id, playerId, card) {
+	const playerPile = await fetch(
+		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/name${playerId}/add/?cards=${card}`
+	);
+	return playerPile.body;
+}
 
-module.exports = {drawACard}
+async function listPiles(deck_id, pileId) {
+	const id = pileId;
+	console.log(id);
+	console.log(deck_id);
+
+	const listedPile = await fetch(
+		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/list/`
+	);
+	// console.log('------',listedPile.body.piles[pileId].cards);
+	return { pileId, ...listedPile.body.piles[pileId] };
+}
+
+module.exports = { setup };

@@ -1,7 +1,7 @@
 const express = require('express');
 const fetch = require('superagent');
 
-const {drawACard} = require('./gameFunctions')
+const {setup} = require('./gameFunctions')
 
 const auth = require('../auth/middleware');
 
@@ -83,29 +83,19 @@ function factory(update) {
       // console.log(updatedGame)
       const { Users } = updatedGame
 
-      const players = Users.map(async user => user.get({plain:true}) )
+      const players = Users.map(user => user.dataValues )
       
       console.log('playersssssssss',players)
 
-      await drawACard(deck_id, players)
-
-
-
-
+      const cards = await setup(deck_id, players)
 
 
       await update()
 
-      res.send(updatedGame)
+      res.send( cards )
     } else {
       res.status(404).send();
     }
-
-     
-
-      
-
-      //shuffle
   })
 
 	return router;
