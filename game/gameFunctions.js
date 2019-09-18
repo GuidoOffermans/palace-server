@@ -11,23 +11,10 @@ const fetch = require('superagent')
     return playerPile.body
   })
 
-  const bodies = Promise.all(promises)
-  return bodies 
+  const bodies = Promise.all(promises).then(bodies => console.log('bodies',bodies[0]))
+  console.log('single body',bodies[0])
+  return 
 
-  
-
-
-  // for (player in players){
-  //   console.log("playerrrrr", player)
-  //   const fetchedCard = await fetch(`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=1`)
-  //   const card = await fetchedCard.body.cards[0].code
-  //   const playerPile = await fetch(`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${player.id}/add/?cards=${card}`)
-  //   console.log('playerPile',playerPile.body)
-  //   array.push(playerPile.body)
-  // }
-    return console.log(array)
-  
-  // return console.log("array------------------------",array)
 }
 
 

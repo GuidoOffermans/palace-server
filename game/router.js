@@ -83,7 +83,7 @@ function factory(update) {
       // console.log(updatedGame)
       const { Users } = updatedGame
 
-      const players = Users.map(async user => user.get({plain:true}) )
+      const players = Users.map(user => user.dataValues )
       
       console.log('playersssssssss',players)
 
