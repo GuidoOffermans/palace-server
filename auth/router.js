@@ -24,7 +24,8 @@ const login = (req, res, next) => {
           })
         } else if (bcrypt.compareSync(req.body.password, user.password)) {
           res.send({
-            jwt: toJWT({ userId: user.id })
+            jwt: toJWT({ userId: user.id }),
+            id: user.id
           })
         }
         else {

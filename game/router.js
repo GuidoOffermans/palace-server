@@ -1,7 +1,7 @@
 const express = require('express');
 const fetch = require('superagent');
 
-const {setup} = require('./gameFunctions')
+const { setup, checkRemaining } = require('./gameFunctions');
 
 const auth = require('../auth/middleware');
 
@@ -20,8 +20,8 @@ function factory(update) {
 		const { name } = request.body;
 
 		const deck = await fetch.get(newDeckUrl);
-    const {deck_id} =  deck.body
-	
+		const { deck_id } = deck.body;
+
 		const game = await Game.create({ name, deck_id });
 
 		await update();
@@ -47,9 +47,9 @@ function factory(update) {
 				} else {
 					res.status(404).send();
 				}
-      })
-      .then(() => update())
-      .catch((err) => next(err));
+			})
+			.then(() => update())
+			.catch((err) => next(err));
 	});
 
 	router.put('/leave/:gameId', auth, (req, res, next) => {
@@ -68,35 +68,44 @@ function factory(update) {
 				} else {
 					res.status(404).send();
 				}
-      })
-      .then(() => update())
-      .catch((err) => next(err));
-     
-  });
-  
-  router.put('/start/:gameId/:deck_id', auth, async (req, res, next) => {
-    const { gameId, deck_id } = req.params;
-    const attributes = ['id', 'name']
-    const game = await Game.findByPk(gameId, { include: [{model: User, attributes: attributes}] })
-    if (game) {
-      const updatedGame = await game.update({ game_status: 'playing' })
-      // console.log(updatedGame)
-      const { Users } = updatedGame
+			})
+			.then(() => update())
+			.catch((err) => next(err));
+	});
 
-      const players = Users.map(user => user.dataValues )
-      
-      console.log('playersssssssss',players)
+	router.put('/start/:gameId/:deck_id', auth, async (req, res, next) => {
+		const { gameId, deck_id } = req.params;
+		const attributes = [ 'id', 'name' ];
+		const game = await Game.findByPk(gameId, {
+			include: [ { model: User, attributes: attributes } ]
+		});
+		if (game) {
+			const updatedGame = await game.update({ game_status: 'playing' });
+			// console.log(updatedGame)
+			const { Users } = updatedGame;
 
-      const cards = await setup(deck_id, players)
+			const players = Users.map((user) => user.dataValues);
 
+			console.log('playersssssssss', players);
 
-      await update()
+			const cards = await setup(deck_id, players);
+			console.log('-------cards-----', cards);
 
-      res.send( cards )
-    } else {
-      res.status(404).send();
-    }
-  })
+      const remaining = await checkRemaining(deck_id)
+
+			const updateGame = await game.update({
+				game_info: {
+					piles: cards,
+					remaining
+        }
+        
+			});
+
+			await update();
+		} else {
+			res.status(404).send();
+		}
+	});
 
 	return router;
 }
