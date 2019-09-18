@@ -1,6 +1,12 @@
 const express = require('express');
+const fetch = require('superagent');
+
+const {drawACard} = require('./gameFunctions')
 
 const auth = require('../auth/middleware');
+
+const newDeckUrl =
+	'https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1';
 
 const { Router } = express;
 
@@ -13,7 +19,10 @@ function factory(update) {
 	async function onGame(request, response) {
 		const { name } = request.body;
 
-		const game = await Game.create({ name });
+		const deck = await fetch.get(newDeckUrl);
+    const {deck_id} =  deck.body
+	
+		const game = await Game.create({ name, deck_id });
 
 		await update();
 
@@ -32,15 +41,72 @@ function factory(update) {
 		User.findByPk(user.id)
 			.then(async (user) => {
 				if (user) {
-					const newUser = await user.update({gameId}).then();
+					const newUser = await user.update({ gameId }).then();
 
 					return newUser;
 				} else {
 					res.status(404).send();
 				}
-			})
-			.catch((err) => next(err));
+      })
+      .then(() => update())
+      .catch((err) => next(err));
 	});
+
+	router.put('/leave/:gameId', auth, (req, res, next) => {
+		const { gameId } = req.params;
+		const { user } = req;
+
+		console.log('gameId', gameId);
+		console.log('user', user.id);
+
+		User.findByPk(user.id)
+			.then(async (user) => {
+				if (user) {
+					const newUser = await user.update({ gameId: null }).then();
+
+					return newUser;
+				} else {
+					res.status(404).send();
+				}
+      })
+      .then(() => update())
+      .catch((err) => next(err));
+     
+  });
+  
+  router.put('/start/:gameId/:deck_id', auth, async (req, res, next) => {
+    const { gameId, deck_id } = req.params;
+    const attributes = ['id', 'name']
+    const game = await Game.findByPk(gameId, { include: [{model: User, attributes: attributes}] })
+    if (game) {
+      const updatedGame = await game.update({ game_status: 'playing' })
+      // console.log(updatedGame)
+      const { Users } = updatedGame
+
+      const players = Users.map(async user => user.get({plain:true}) )
+      
+      console.log('playersssssssss',players)
+
+      await drawACard(deck_id, players)
+
+
+
+
+
+
+      await update()
+
+      res.send(updatedGame)
+    } else {
+      res.status(404).send();
+    }
+
+     
+
+      
+
+      //shuffle
+  })
 
 	return router;
 }
