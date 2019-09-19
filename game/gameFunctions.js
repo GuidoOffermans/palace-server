@@ -8,7 +8,8 @@ async function setup(deck_id, players) {
 		const pile = await addCardToPile(deck_id, player.id, card);
 		console.log('adding-to-pile-----------------------');
 
-		return pile;
+		return pile
+
 	});
 
 	const bodies = await Promise.all(promises).then().catch(console.error);
@@ -25,6 +26,19 @@ async function setup(deck_id, players) {
 
 	// console.log('pilesList', piles);
 
+	return piles
+}
+
+async function playCardResponse(deck_id, pileName, cardCode) {
+	console.log('I am inside playCardResponse')
+	const discardPileResponse = await playCard(deck_id, pileName, cardCode)
+	const pileArray = Object.keys(discardPileResponse.piles)
+	const pilesList = await pileArray.map((pileId) =>
+		listPiles(deck_id, pileId)
+	);
+
+	const piles = await Promise.all(pilesList)
+  
 	return piles;
 }
 
@@ -42,6 +56,7 @@ async function drawACardForPlayer(deck_id, playerId, players) {
 	console.log('pilesList', piles);
 
 	return piles;
+
 
 }
 
@@ -63,7 +78,7 @@ async function addCardToPile(deck_id, playerId, card) {
 async function listPiles(deck_id, pileId) {
 	const id = pileId;
 	console.log(id);
-	console.log(deck_id);
+	// console.log(deck_id);
 
 	const listedPile = await fetch(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/list/`
@@ -80,4 +95,20 @@ async function checkRemaining(deck_id) {
 	return remaining;
 }
 
-module.exports = { setup, checkRemaining, drawACardForPlayer };
+
+async function playCard(deck_id, pileId, cardCode) {
+	console.log('cardcode', cardCode)
+	console.log('I am inside playCard function')
+	const drawFromHand = await fetch(
+		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/draw/?cards=${cardCode}`
+	)
+	console.log('draw------------', drawFromHand.body,'--------------')
+	const discardPile = await addCardToPile(deck_id, 'discard', cardCode)
+	console.log('add---------', discardPile,'----------')
+	// console.log('cardcode', cardCode)
+	return discardPile
+}
+
+
+module.exports = { setup, checkRemaining, drawACardForPlayer, playCardResponse  };
+

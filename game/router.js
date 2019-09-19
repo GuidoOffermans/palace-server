@@ -1,10 +1,10 @@
 const express = require('express');
 const fetch = require('superagent');
-
 const {
 	setup,
 	checkRemaining,
-	drawACardForPlayer
+	drawACardForPlayer,
+    playCardResponse 
 } = require('./gameFunctions');
 
 const auth = require('../auth/middleware');
@@ -87,6 +87,7 @@ function factory(update) {
 
 			const players = Users.map((user) => user.dataValues);
 
+
 			const turnArray = await players.map((player) => player.id);
 		
       const chance = Math.random();
@@ -97,6 +98,7 @@ function factory(update) {
 			} else {
 				turn = turnArray[1];
 			}
+
 
 			const cards = await setup(deck_id, players);
 		
@@ -119,6 +121,7 @@ function factory(update) {
 	router.put('/draw/:gameId/:deckId', async (req, res, next) => {
 		const { gameId, deckId } = req.params;
 		const attributes = [ 'id', 'name' ];
+
 		const game = await Game.findByPk(gameId, {
 			include: [ { model: User, attributes: attributes } ]
 		});
@@ -147,6 +150,39 @@ function factory(update) {
 		}
 		res.send({ message: 'ok' });
 	});
+
+	router.put('/play-card/:gameId/:deckId', async (req, res, next) => {
+		console.log('I can hear you---------------------------------------------------------')
+		console.log('pile name:', req.body.pileName)
+		console.log('card code:', req.body.code)
+		console.log('playCard params:', req.params)
+		// console.log('playcard deckId:', req.params.deckId)
+		const { gameId, deckId } = req.params
+		const { pileName, code} = req.body
+		const attributes = ['id', 'name']
+		const game = await Game.findByPk(gameId, {
+			include: [{ model: User, attributes: attributes }]
+		})
+		if (game) {
+
+
+			// const { Users } = game;
+			// const players = Users.map((user) => user.dataValues)
+			const cards = await playCardResponse(deckId, pileName, code)
+			const remaining = await checkRemaining(deckId)
+
+			await game.update({
+				game_info: {
+					piles: cards,
+					remaining
+				}
+			})
+			await update()
+		} else {
+			res.status(404).send()
+		}
+		res.send({ message: 'ok' })
+	})
 
 	return router;
 }
