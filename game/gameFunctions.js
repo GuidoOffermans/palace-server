@@ -5,12 +5,10 @@ async function setup(deck_id, players) {
 		console.log('player');
 		const card = await drawACard(deck_id, 1);
 		console.log('drawing------------------------------');
-    const pile = await addCardToPile(deck_id, player.id, card);
+		const pile = await addCardToPile(deck_id, player.id, card);
 		console.log('adding-to-pile-----------------------');
 
-    
-  
-		return pile
+		return pile;
 	});
 
 	const bodies = await Promise.all(promises).then().catch(console.error);
@@ -27,9 +25,24 @@ async function setup(deck_id, players) {
 
 	// console.log('pilesList', piles);
 
-  
+	return piles;
+}
 
-	return piles
+async function drawACardForPlayer(deck_id, playerId, players) {
+
+	const card = await drawACard(deck_id, 1);
+	const pile = await addCardToPile(deck_id, playerId, card);
+
+	const pilesList = await players.map((pileId) =>
+		listPiles(deck_id, pileId)
+	);
+
+	const piles = await Promise.all(pilesList);
+
+	console.log('pilesList', piles);
+
+	return piles;
+
 }
 
 async function drawACard(deck_id, numberOfCards) {
@@ -63,8 +76,8 @@ async function checkRemaining(deck_id) {
 	const fetchedCard = await fetch(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=0`
 	);
-  const remaining = await fetchedCard.body.remaining;
+	const remaining = await fetchedCard.body.remaining;
 	return remaining;
 }
 
-module.exports = { setup, checkRemaining };
+module.exports = { setup, checkRemaining, drawACardForPlayer };
