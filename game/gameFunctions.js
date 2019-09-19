@@ -43,11 +43,11 @@ async function playCardResponse(deck_id, pileName, cardCode) {
 }
 
 async function drawACardForPlayer(deck_id, playerId, players) {
-
+  console.log('players-----', players)
 	const card = await drawACard(deck_id, 1);
 	const pile = await addCardToPile(deck_id, playerId, card);
-
-	const pilesList = await players.map((pileId) =>
+  const lister = ['discard', ...players]
+	const pilesList = await lister.map((pileId) =>
 		listPiles(deck_id, pileId)
 	);
 
