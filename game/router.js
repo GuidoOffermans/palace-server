@@ -45,7 +45,7 @@ function factory(update) {
 		User.findByPk(user.id)
 			.then(async (user) => {
 				if (user) {
-					const newUser = await user.update({ gameId }).then();
+					const newUser = await user.update({ gameId });
 
 					return newUser;
 				} else {
@@ -63,7 +63,7 @@ function factory(update) {
 		User.findByPk(user.id)
 			.then(async (user) => {
 				if (user) {
-					const newUser = await user.update({ gameId: null }).then();
+					const newUser = await user.update({ gameId: null });
 
 					return newUser;
 				} else {
