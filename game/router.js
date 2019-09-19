@@ -86,7 +86,19 @@ function factory(update) {
 
 			const players = Users.map((user) => user.dataValues);
 
-			console.log('playersssssssss', players);
+
+      console.log('playersssssssss', players);
+      
+      const turnArray = await players.map(player => player.id)
+      console.log(turnArray)
+      const chance = Math.random()
+      let turn = ''
+      console.log(chance)
+      if (chance > .5) {
+        turn = turnArray[0]
+      } else {
+        turn = turnArray[1]
+      }
 
 			const cards = await setup(deck_id, players);
 			console.log('-------cards-----', cards);
@@ -97,8 +109,8 @@ function factory(update) {
 				game_info: {
 					piles: cards,
 					remaining
-        }
-        
+        },
+        game_turn: turn
 			});
 
 			await update();
