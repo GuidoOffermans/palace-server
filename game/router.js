@@ -35,7 +35,7 @@ function factory(update) {
 
 	router.post('/game', onGame);
 
-	router.put('/join/:gameId', auth, (req, res, next) => {
+	router.put('/join/:gameId', auth, async (req, res, next) => {
 		const { gameId } = req.params;
 		const { user } = req;
 
@@ -53,6 +53,7 @@ function factory(update) {
 				}
 			})
 			.then(() => update())
+			.then(() => res.send())
 			.catch((err) => next(err));
 	});
 
@@ -71,6 +72,7 @@ function factory(update) {
 				}
 			})
 			.then(() => update())
+			.then(() => res.send())
 			.catch((err) => next(err));
 	});
 
@@ -88,7 +90,7 @@ function factory(update) {
 			const players = Users.map((user) => user.dataValues);
 
 
-			const turnArray = await players.map((player) => player.id);
+			const turnArray = players.map((player) => player.id);
 		
       const chance = Math.random();
       
@@ -113,6 +115,7 @@ function factory(update) {
 			});
 
 			await update();
+			res.send()
 		} else {
 			res.status(404).send();
 		}
@@ -152,10 +155,10 @@ function factory(update) {
 	});
 
 	router.put('/play-card/:gameId/:deckId', async (req, res, next) => {
-		console.log('I can hear you---------------------------------------------------------')
-		console.log('pile name:', req.body.pileName)
-		console.log('card code:', req.body.code)
-		console.log('playCard params:', req.params)
+		// console.log('I can hear you---------------------------------------------------------')
+		// console.log('pile name:', req.body.pileName)
+		// console.log('card code:', req.body.code)
+		// console.log('playCard params:', req.params)
 		// console.log('playcard deckId:', req.params.deckId)
 		const { gameId, deckId } = req.params
 		const { pileName, code} = req.body
