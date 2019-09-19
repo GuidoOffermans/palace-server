@@ -4,9 +4,10 @@ async function setup(deck_id, players) {
 	const promises = players.map(async (player) => {
 		console.log('player');
 		const card = await drawACard(deck_id, 1);
-		console.log('drawing');
+		console.log('drawing------------------------------');
     const pile = await addCardToPile(deck_id, player.id, card);
-    
+		console.log('adding-to-pile-----------------------');
+
     
   
 		return pile
