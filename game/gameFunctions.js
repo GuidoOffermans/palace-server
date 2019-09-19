@@ -8,9 +8,8 @@ async function setup(deck_id, players) {
 		const pile = await addCardToPile(deck_id, player.id, card);
 		console.log('adding-to-pile-----------------------');
 
-
-
 		return pile
+
 	});
 
 	const bodies = await Promise.all(promises).then().catch(console.error);
@@ -27,8 +26,6 @@ async function setup(deck_id, players) {
 
 	// console.log('pilesList', piles);
 
-
-
 	return piles
 }
 
@@ -41,8 +38,26 @@ async function playCardResponse(deck_id, pileName, cardCode) {
 	);
 
 	const piles = await Promise.all(pilesList)
+  
+	return piles;
+}
 
-	return piles
+async function drawACardForPlayer(deck_id, playerId, players) {
+
+	const card = await drawACard(deck_id, 1);
+	const pile = await addCardToPile(deck_id, playerId, card);
+
+	const pilesList = await players.map((pileId) =>
+		listPiles(deck_id, pileId)
+	);
+
+	const piles = await Promise.all(pilesList);
+
+	console.log('pilesList', piles);
+
+	return piles;
+
+
 }
 
 async function drawACard(deck_id, numberOfCards) {
@@ -80,6 +95,7 @@ async function checkRemaining(deck_id) {
 	return remaining;
 }
 
+
 async function playCard(deck_id, pileId, cardCode) {
 	console.log('cardcode', cardCode)
 	console.log('I am inside playCard function')
@@ -92,4 +108,7 @@ async function playCard(deck_id, pileId, cardCode) {
 	// console.log('cardcode', cardCode)
 	return discardPile
 }
-module.exports = { setup, checkRemaining, playCardResponse };
+
+
+module.exports = { setup, checkRemaining, drawACardForPlayer, playCardResponse  };
+

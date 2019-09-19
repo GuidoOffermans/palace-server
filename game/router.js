@@ -1,7 +1,11 @@
 const express = require('express');
 const fetch = require('superagent');
-
-const { setup, checkRemaining, playCardResponse } = require('./gameFunctions');
+const {
+	setup,
+	checkRemaining,
+	drawACardForPlayer,
+    playCardResponse 
+} = require('./gameFunctions');
 
 const auth = require('../auth/middleware');
 
@@ -56,9 +60,6 @@ function factory(update) {
 		const { gameId } = req.params;
 		const { user } = req;
 
-		// console.log('gameId', gameId);
-		// console.log('user', user.id);
-
 		User.findByPk(user.id)
 			.then(async (user) => {
 				if (user) {
@@ -75,37 +76,35 @@ function factory(update) {
 
 	router.put('/start/:gameId/:deck_id', auth, async (req, res, next) => {
 		const { gameId, deck_id } = req.params;
-		const attributes = ['id', 'name'];
+		const attributes = [ 'id', 'name' ];
 		const game = await Game.findByPk(gameId, {
-			include: [{ model: User, attributes: attributes }]
+			include: [ { model: User, attributes: attributes } ]
 		});
 		if (game) {
 			const updatedGame = await game.update({ game_status: 'playing' });
-			// console.log(updatedGame)
+		
 			const { Users } = updatedGame;
 
 			const players = Users.map((user) => user.dataValues);
 
-			console.log('playersssssssss', players);
 
-			const turnArray = await players.map(player => player.id)
-			console.log(turnArray)
-			const chance = Math.random()
-			let turn = ''
-			console.log(chance)
-			if (chance > .5) {
-				turn = turnArray[0]
+			const turnArray = await players.map((player) => player.id);
+		
+      const chance = Math.random();
+      
+			let turn = '';
+			if (chance > 0.5) {
+				turn = turnArray[0];
 			} else {
-				turn = turnArray[1]
+				turn = turnArray[1];
 			}
 
 
 			const cards = await setup(deck_id, players);
-			// console.log('-------cards-----', cards);
+		
+			const remaining = await checkRemaining(deck_id);
 
-			const remaining = await checkRemaining(deck_id)
-
-			const updateGame = await game.update({
+			await game.update({
 				game_info: {
 					piles: cards,
 					remaining
@@ -120,29 +119,37 @@ function factory(update) {
 	});
 
 	router.put('/draw/:gameId/:deckId', async (req, res, next) => {
-		const { gameId, deckId } = req.params
-		const attributes = ['id', 'name']
+		const { gameId, deckId } = req.params;
+		const attributes = [ 'id', 'name' ];
+
 		const game = await Game.findByPk(gameId, {
-			include: [{ model: User, attributes: attributes }]
-		})
+			include: [ { model: User, attributes: attributes } ]
+		});
 		if (game) {
-			const { Users } = game;
-			const players = Users.map((user) => user.dataValues)
-			const cards = await setup(deckId, players)
-			const remaining = await checkRemaining(deckId)
+			const { game_turn, deck_id, Users } = game;
+
+			const players = Users.map((user) => user.dataValues.id);
+
+			const turn = players.find((player) => player !== game_turn);
+
+			const cards = await drawACardForPlayer(deck_id, game_turn, players);
+
+			const remaining = await checkRemaining(deckId);
 
 			await game.update({
 				game_info: {
 					piles: cards,
 					remaining
-				}
-			})
-			await update()
+				},
+				game_turn: turn
+			});
+
+			await update();
 		} else {
-			res.status(404).send()
+			res.status(404).send();
 		}
-		res.send({ message: 'ok' })
-	})
+		res.send({ message: 'ok' });
+	});
 
 	router.put('/play-card/:gameId/:deckId', async (req, res, next) => {
 		console.log('I can hear you---------------------------------------------------------')
