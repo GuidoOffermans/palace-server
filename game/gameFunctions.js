@@ -5,11 +5,11 @@ async function setup(deck_id, players) {
 		console.log('player');
 		const card = await drawACard(deck_id, 1);
 		console.log('drawing------------------------------');
-    const pile = await addCardToPile(deck_id, player.id, card);
+		const pile = await addCardToPile(deck_id, player.id, card);
 		console.log('adding-to-pile-----------------------');
 
-    
-  
+
+
 		return pile
 	});
 
@@ -27,7 +27,20 @@ async function setup(deck_id, players) {
 
 	// console.log('pilesList', piles);
 
-  
+
+
+	return piles
+}
+
+async function playCardResponse(deck_id, pileName, cardCode) {
+	console.log('I am inside playCardResponse')
+	const discardPileResponse = await playCard(deck_id, pileName, cardCode)
+	const pileArray = Object.keys(discardPileResponse.piles)
+	const pilesList = await pileArray.map((pileId) =>
+		listPiles(deck_id, pileId)
+	);
+
+	const piles = await Promise.all(pilesList)
 
 	return piles
 }
@@ -50,7 +63,7 @@ async function addCardToPile(deck_id, playerId, card) {
 async function listPiles(deck_id, pileId) {
 	const id = pileId;
 	console.log(id);
-	console.log(deck_id);
+	// console.log(deck_id);
 
 	const listedPile = await fetch(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/list/`
@@ -63,8 +76,20 @@ async function checkRemaining(deck_id) {
 	const fetchedCard = await fetch(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=0`
 	);
-  const remaining = await fetchedCard.body.remaining;
+	const remaining = await fetchedCard.body.remaining;
 	return remaining;
 }
 
-module.exports = { setup, checkRemaining };
+async function playCard(deck_id, pileId, cardCode) {
+	console.log('cardcode', cardCode)
+	console.log('I am inside playCard function')
+	const drawFromHand = await fetch(
+		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/draw/?cards=${cardCode}`
+	)
+	console.log('draw------------', drawFromHand.body,'--------------')
+	const discardPile = await addCardToPile(deck_id, 'discard', cardCode)
+	console.log('add---------', discardPile,'----------')
+	// console.log('cardcode', cardCode)
+	return discardPile
+}
+module.exports = { setup, checkRemaining, playCardResponse };

@@ -1,7 +1,7 @@
 const express = require('express');
 const fetch = require('superagent');
 
-const { setup, checkRemaining } = require('./gameFunctions');
+const { setup, checkRemaining, playCardResponse } = require('./gameFunctions');
 
 const auth = require('../auth/middleware');
 
@@ -86,18 +86,18 @@ function factory(update) {
 
 			const players = Users.map((user) => user.dataValues);
 
-      console.log('playersssssssss', players);
-      
-      const turnArray = await players.map(player => player.id)
-      console.log(turnArray)
-      const chance = Math.random()
-      let turn = ''
-      console.log(chance)
-      if (chance > .5) {
-        turn = turnArray[0]
-      } else {
-        turn = turnArray[1]
-      }
+			console.log('playersssssssss', players);
+
+			const turnArray = await players.map(player => player.id)
+			console.log(turnArray)
+			const chance = Math.random()
+			let turn = ''
+			console.log(chance)
+			if (chance > .5) {
+				turn = turnArray[0]
+			} else {
+				turn = turnArray[1]
+			}
 
 
 			const cards = await setup(deck_id, players);
@@ -109,8 +109,8 @@ function factory(update) {
 				game_info: {
 					piles: cards,
 					remaining
-        },
-        game_turn: turn
+				},
+				game_turn: turn
 			});
 
 			await update();
@@ -120,8 +120,6 @@ function factory(update) {
 	});
 
 	router.put('/draw/:gameId/:deckId', async (req, res, next) => {
-		console.log('I can hear you---------------------------------------------------------')
-		console.log('draw route reqparams:', req.params)
 		const { gameId, deckId } = req.params
 		const attributes = ['id', 'name']
 		const game = await Game.findByPk(gameId, {
@@ -131,6 +129,39 @@ function factory(update) {
 			const { Users } = game;
 			const players = Users.map((user) => user.dataValues)
 			const cards = await setup(deckId, players)
+			const remaining = await checkRemaining(deckId)
+
+			await game.update({
+				game_info: {
+					piles: cards,
+					remaining
+				}
+			})
+			await update()
+		} else {
+			res.status(404).send()
+		}
+		res.send({ message: 'ok' })
+	})
+
+	router.put('/play-card/:gameId/:deckId', async (req, res, next) => {
+		console.log('I can hear you---------------------------------------------------------')
+		console.log('pile name:', req.body.pileName)
+		console.log('card code:', req.body.code)
+		console.log('playCard params:', req.params)
+		// console.log('playcard deckId:', req.params.deckId)
+		const { gameId, deckId } = req.params
+		const { pileName, code} = req.body
+		const attributes = ['id', 'name']
+		const game = await Game.findByPk(gameId, {
+			include: [{ model: User, attributes: attributes }]
+		})
+		if (game) {
+
+
+			// const { Users } = game;
+			// const players = Users.map((user) => user.dataValues)
+			const cards = await playCardResponse(deckId, pileName, code)
 			const remaining = await checkRemaining(deckId)
 
 			await game.update({
