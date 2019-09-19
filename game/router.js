@@ -35,8 +35,8 @@ function factory(update) {
 		const { gameId } = req.params;
 		const { user } = req;
 
-		console.log('gameId', gameId);
-		console.log('user', user.id);
+		// console.log('gameId', gameId);
+		// console.log('user', user.id);
 
 		User.findByPk(user.id)
 			.then(async (user) => {
@@ -56,8 +56,8 @@ function factory(update) {
 		const { gameId } = req.params;
 		const { user } = req;
 
-		console.log('gameId', gameId);
-		console.log('user', user.id);
+		// console.log('gameId', gameId);
+		// console.log('user', user.id);
 
 		User.findByPk(user.id)
 			.then(async (user) => {
@@ -75,9 +75,9 @@ function factory(update) {
 
 	router.put('/start/:gameId/:deck_id', auth, async (req, res, next) => {
 		const { gameId, deck_id } = req.params;
-		const attributes = [ 'id', 'name' ];
+		const attributes = ['id', 'name'];
 		const game = await Game.findByPk(gameId, {
-			include: [ { model: User, attributes: attributes } ]
+			include: [{ model: User, attributes: attributes }]
 		});
 		if (game) {
 			const updatedGame = await game.update({ game_status: 'playing' });
@@ -85,7 +85,6 @@ function factory(update) {
 			const { Users } = updatedGame;
 
 			const players = Users.map((user) => user.dataValues);
-
 
       console.log('playersssssssss', players);
       
@@ -100,10 +99,11 @@ function factory(update) {
         turn = turnArray[1]
       }
 
-			const cards = await setup(deck_id, players);
-			console.log('-------cards-----', cards);
 
-      const remaining = await checkRemaining(deck_id)
+			const cards = await setup(deck_id, players);
+			// console.log('-------cards-----', cards);
+
+			const remaining = await checkRemaining(deck_id)
 
 			const updateGame = await game.update({
 				game_info: {
@@ -118,6 +118,33 @@ function factory(update) {
 			res.status(404).send();
 		}
 	});
+
+	router.put('/draw/:gameId/:deckId', async (req, res, next) => {
+		console.log('I can hear you---------------------------------------------------------')
+		console.log('draw route reqparams:', req.params)
+		const { gameId, deckId } = req.params
+		const attributes = ['id', 'name']
+		const game = await Game.findByPk(gameId, {
+			include: [{ model: User, attributes: attributes }]
+		})
+		if (game) {
+			const { Users } = game;
+			const players = Users.map((user) => user.dataValues)
+			const cards = await setup(deckId, players)
+			const remaining = await checkRemaining(deckId)
+
+			await game.update({
+				game_info: {
+					piles: cards,
+					remaining
+				}
+			})
+			await update()
+		} else {
+			res.status(404).send()
+		}
+		res.send({ message: 'ok' })
+	})
 
 	return router;
 }
