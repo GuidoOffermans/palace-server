@@ -4,7 +4,8 @@ const {
 	setup,
 	checkRemaining,
 	drawACardForPlayer,
-	playCardResponse
+	playCardResponse,
+	takeDiscardResponse
 } = require('./gameFunctions');
 
 const auth = require('../auth/middleware');
@@ -184,6 +185,34 @@ function factory(update) {
 			res.status(404).send()
 		}
 		res.send({ message: 'ok' })
+	})
+
+	router.put('/take-discard/:gameId/:deckId', async (req, res, next) => {
+		console.log('I am inside the take-discard route---------------')
+		const { gameId, deckId } = req.params;
+		const { pileName } = req.body
+		const attributes = ['id', 'name'];
+
+		const game = await Game.findByPk(gameId, {
+			include: [{ model: User, attributes: attributes }]
+		});
+
+		if (game) {
+			const discardPileRemaining = game.game_info.piles.find(pile => pile.pileId === 'discard').remaining
+			console.log('discardPileRemaining::::::::::::::::::::::::::::::', game.game_info.piles.find(pile => pile.pileId === 'discard'))
+			if (discardPileRemaining){
+				const cards = await takeDiscardResponse(deckId, pileName, discardPileRemaining)
+				remaining = await checkRemaining(deckId)
+				await game.update({
+					game_info: {
+						piles: cards,
+						remaining
+					}
+				})
+				await update()
+			} else return res.end()
+		} else res.status(404).send()
+		res.send({ message: 'everything went well' })
 	})
 
 	return router;
