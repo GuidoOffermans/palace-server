@@ -1,9 +1,15 @@
-const fetch = require('superagent');
+const superagent = require('superagent');
+
+async function get(url) {
+  return superagent(url).timeout({ deadline: 2000 }).catch(console.error)
+}
 
 async function setup(deck_id, players) {
 	const promises = players.map(async (player) => {
-		console.log('player');
-		const card = await drawACard(deck_id, 1);
+    console.log('player');
+    
+
+		const card = await drawACard(deck_id, 4);
 		console.log('drawing------------------------------');
 		const pile = await addCardToPile(deck_id, player.id, card);
 		console.log('adding-to-pile-----------------------');
@@ -25,7 +31,7 @@ async function setup(deck_id, players) {
 	const piles = await Promise.all(pilesList);
 
 	// console.log('pilesList', piles);
-
+  console.log('piles_________', piles)
 	return piles
 }
 
@@ -45,7 +51,8 @@ async function playCardResponse(deck_id, pileName, cardCode) {
 async function drawACardForPlayer(deck_id, playerId, players) {
   console.log('players-----', players)
 	const card = await drawACard(deck_id, 1);
-	const pile = await addCardToPile(deck_id, playerId, card);
+  const pile = await addCardToPile(deck_id, playerId, card);
+  
   const lister = ['discard', ...players]
 	const pilesList = await lister.map((pileId) =>
 		listPiles(deck_id, pileId)
@@ -61,15 +68,20 @@ async function drawACardForPlayer(deck_id, playerId, players) {
 }
 
 async function drawACard(deck_id, numberOfCards) {
-	const fetchedCard = await fetch(
+	const fetchedCard = await get(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=${numberOfCards}`
-	);
-	const card = await fetchedCard.body.cards[0].code;
-	return card;
+  );
+  const cards = fetchedCard.body.cards
+  const cardsArray =  cards.map(card => card.code)
+  console.log('cardsArray',cardsArray)
+  
+  const cardString = cardsArray.toString()
+  console.log('string',cardString)
+	return cardString;
 }
 
 async function addCardToPile(deck_id, playerId, card) {
-	const playerPile = await fetch(
+	const playerPile = await get(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${playerId}/add/?cards=${card}`
 	);
 	return playerPile.body;
@@ -80,7 +92,7 @@ async function listPiles(deck_id, pileId) {
 	console.log(id);
 	// console.log(deck_id);
 
-	const listedPile = await fetch(
+	const listedPile = await get(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/list/`
 	);
 	// console.log('-----test-',listedPile.body.piles[pileId].cards);
@@ -88,10 +100,10 @@ async function listPiles(deck_id, pileId) {
 }
 
 async function checkRemaining(deck_id) {
-	const fetchedCard = await fetch(
+	const fetchedCard = await get(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=0`
-	);
-	const remaining = await fetchedCard.body.remaining;
+  );
+	const remaining = fetchedCard.body.remaining;
 	return remaining;
 }
 
@@ -99,7 +111,7 @@ async function checkRemaining(deck_id) {
 async function playCard(deck_id, pileId, cardCode) {
 	console.log('cardcode', cardCode)
 	console.log('I am inside playCard function')
-	const drawFromHand = await fetch(
+	const drawFromHand = await get(
 		`https://deckofcardsapi.com/api/deck/${deck_id}/pile/${pileId}/draw/?cards=${cardCode}`
 	)
 	console.log('draw------------', drawFromHand.body,'--------------')

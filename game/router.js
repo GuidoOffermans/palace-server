@@ -4,7 +4,7 @@ const {
 	setup,
 	checkRemaining,
 	drawACardForPlayer,
-    playCardResponse 
+	playCardResponse
 } = require('./gameFunctions');
 
 const auth = require('../auth/middleware');
@@ -35,7 +35,7 @@ function factory(update) {
 
 	router.post('/game', onGame);
 
-	router.put('/join/:gameId', auth, (req, res, next) => {
+	router.put('/join/:gameId', auth, async (req, res, next) => {
 		const { gameId } = req.params;
 		const { user } = req;
 
@@ -45,7 +45,7 @@ function factory(update) {
 		User.findByPk(user.id)
 			.then(async (user) => {
 				if (user) {
-					const newUser = await user.update({ gameId }).then();
+					const newUser = await user.update({ gameId });
 
 					return newUser;
 				} else {
@@ -53,6 +53,7 @@ function factory(update) {
 				}
 			})
 			.then(() => update())
+			.then(() => res.send())
 			.catch((err) => next(err));
 	});
 
@@ -63,7 +64,12 @@ function factory(update) {
 		User.findByPk(user.id)
 			.then(async (user) => {
 				if (user) {
-					const newUser = await user.update({ gameId: null }).then();
+					const newUser = await user.update({ gameId: null });
+
+					const currGame = await Game.findByPk(req.params.gameId)
+					const deck = await fetch.get(newDeckUrl);
+					const { deck_id } = deck.body;
+					await currGame.update({ game_status: 'waiting', deck_id })
 
 					return newUser;
 				} else {
@@ -71,27 +77,31 @@ function factory(update) {
 				}
 			})
 			.then(() => update())
+			.then(() => res.send())
 			.catch((err) => next(err));
+
+		// Game.findByPk(req.params.gameId)
+		// 	.then(game => await game.update({ game_status: 'waiting' }))
 	});
 
 	router.put('/start/:gameId/:deck_id', auth, async (req, res, next) => {
 		const { gameId, deck_id } = req.params;
-		const attributes = [ 'id', 'name' ];
+		const attributes = ['id', 'name'];
 		const game = await Game.findByPk(gameId, {
-			include: [ { model: User, attributes: attributes } ]
+			include: [{ model: User, attributes: attributes }]
 		});
 		if (game) {
 			const updatedGame = await game.update({ game_status: 'playing' });
-		
+
 			const { Users } = updatedGame;
 
 			const players = Users.map((user) => user.dataValues);
 
 
-			const turnArray = await players.map((player) => player.id);
-		
-      const chance = Math.random();
-      
+			const turnArray = players.map((player) => player.id);
+
+			const chance = Math.random();
+
 			let turn = '';
 			if (chance > 0.5) {
 				turn = turnArray[0];
@@ -101,7 +111,7 @@ function factory(update) {
 
 
 			const cards = await setup(deck_id, players);
-		
+
 			const remaining = await checkRemaining(deck_id);
 
 			await game.update({
@@ -113,6 +123,7 @@ function factory(update) {
 			});
 
 			await update();
+			res.send()
 		} else {
 			res.status(404).send();
 		}
@@ -120,10 +131,10 @@ function factory(update) {
 
 	router.put('/draw/:gameId/:deckId', async (req, res, next) => {
 		const { gameId, deckId } = req.params;
-		const attributes = [ 'id', 'name' ];
+		const attributes = ['id', 'name'];
 
 		const game = await Game.findByPk(gameId, {
-			include: [ { model: User, attributes: attributes } ]
+			include: [{ model: User, attributes: attributes }]
 		});
 		if (game) {
 			const { game_turn, deck_id, Users } = game;
@@ -152,22 +163,13 @@ function factory(update) {
 	});
 
 	router.put('/play-card/:gameId/:deckId', async (req, res, next) => {
-		console.log('I can hear you---------------------------------------------------------')
-		console.log('pile name:', req.body.pileName)
-		console.log('card code:', req.body.code)
-		console.log('playCard params:', req.params)
-		// console.log('playcard deckId:', req.params.deckId)
 		const { gameId, deckId } = req.params
-		const { pileName, code} = req.body
+		const { pileName, code } = req.body
 		const attributes = ['id', 'name']
 		const game = await Game.findByPk(gameId, {
 			include: [{ model: User, attributes: attributes }]
 		})
 		if (game) {
-
-
-			// const { Users } = game;
-			// const players = Users.map((user) => user.dataValues)
 			const cards = await playCardResponse(deckId, pileName, code)
 			const remaining = await checkRemaining(deckId)
 
