@@ -5,21 +5,25 @@ async function get(url) {
 }
 
 async function setup(deck_id, players) {
+	console.log('I am inside setup function')
 	const promises = players.map(async (player) => {
+
     console.log('player');
     
 
 		const card = await drawACard(deck_id, 4);
 		console.log('drawing------------------------------');
+
 		const pile = await addCardToPile(deck_id, player.id, card);
-		console.log('adding-to-pile-----------------------');
+		console.log('setup adding-to-pile-----------------------');
 
 		return pile
 
 	});
-
+	console.log('promises-----0------', promises)
 	const bodies = await Promise.all(promises).then().catch(console.error);
-	// console.log('bodies-------', bodies[0]);
+	console.log('bodies-------', bodies[0]);
+	
 
 	const pileArray = Object.keys(bodies[0].piles);
 	// console.log('pileArray', pileArray);
@@ -38,27 +42,38 @@ async function setup(deck_id, players) {
 async function playCardResponse(deck_id, pileName, cardCode) {
 	console.log('I am inside playCardResponse')
 	const discardPileResponse = await playCard(deck_id, pileName, cardCode)
+	console.log('playcardresponse drawing------------------------------');
 	const pileArray = Object.keys(discardPileResponse.piles)
 	const pilesList = await pileArray.map((pileId) =>
 		listPiles(deck_id, pileId)
 	);
+	console.log('listallcards listing------------------------------');
+
 
 	const piles = await Promise.all(pilesList)
+	console.log('pcresponse aftr promiseall------------------------------');
+
   
 	return piles;
 }
 
 async function drawACardForPlayer(deck_id, playerId, players) {
-  console.log('players-----', players)
+	console.log('I am inside draw card for player')
+  // console.log('players-----', players)
 	const card = await drawACard(deck_id, 1);
-  const pile = await addCardToPile(deck_id, playerId, card);
-  
+
+	console.log('drawacard drawing------------------------------');
+	const pile = await addCardToPile(deck_id, playerId, card);
+	console.log('add to pile adding------------------------------');
+
   const lister = ['discard', ...players]
 	const pilesList = await lister.map((pileId) =>
 		listPiles(deck_id, pileId)
 	);
 
 	const piles = await Promise.all(pilesList);
+	console.log('pcrdraw a card aftr promiseall------------------------------');
+
 
 	console.log('pilesList', piles);
 
